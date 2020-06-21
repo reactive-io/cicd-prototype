@@ -180,6 +180,7 @@ Resources:
       Name: !Sub "${AWS::StackName}-build"
       Description: !Sub "Build envrionment used to create the docker image for the ${AWS::StackName} project"
       ServiceRole: !GetAtt CodeBuildRole.Arn
+      SourceVersion: master
       Source: 
         GitCloneDepth: 1
         Type: GITHUB
