@@ -22,6 +22,12 @@ Metadata:
           - ECSWebTaskDesiredCount
           - ECSTaskDefinitionCPU
           - ECSTaskDefinitionMemory
+      - Label:
+          default: GitHub
+        Parameters:
+          - GitHubOwner
+          - GitHubRepo
+          - GitHubBranch
 
 Parameters:
   VpcId:
@@ -41,6 +47,18 @@ Parameters:
       - BUILD_GENERAL1_MEDIUM
       - BUILD_GENERAL1_LARGE
   
+  GitHubOwner:
+    Description: The Owner of the GitHub Repository (e.g. User or Organization)
+    Type: String
+  
+  GitHubRepo:
+    Description: The GitHub Repository
+    Type: String
+
+  GitHubBranch:
+    Description: The specific branch you want to monitor for new builds and deploys
+    Type: String
+
   ECRLifecycleCount:
     Description: The maximum number of images ECR should retain
     Type: Number
@@ -184,7 +202,7 @@ Resources:
       Source: 
         GitCloneDepth: 1
         Type: GITHUB
-        Location: https://github.com/reactive-io/cicd-prototype.git
+        Location: !Sub https://github.com/${GitHubOwner}/${GitHubRepo}.git
         BuildSpec: |
           version: 0.2
           phases:
@@ -556,9 +574,9 @@ Resources:
               OutputArtifacts:
                 - Name: AppSource
               Configuration:
-                Owner: reactive-io
-                Repo: cicd-prototype
-                Branch: master
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
                 OAuthToken: '{{resolve:secretsmanager:GitHub:SecretString:OAUTH_TOKEN}}'
                 PollForSourceChanges: false
         - Name: Build
@@ -577,16 +595,6 @@ Resources:
                 - Name: AppBuild
               Configuration:
                 ProjectName: !Ref CodeBuildProject
-        - Name: Approve
-          Actions:
-            - Name: Approve
-              RunOrder: 1
-              Region: !Ref AWS::Region
-              ActionTypeId:
-                Version: 1
-                Category: Approval
-                Owner: AWS
-                Provider: Manual
         - Name: Deploy
           Actions:
             - Name: Deploy
